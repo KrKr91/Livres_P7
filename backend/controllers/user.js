@@ -2,7 +2,6 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
-// --- FONCTION D'INSCRIPTION ---
 exports.signup = (req, res, next) => {
   bcrypt.hash(req.body.password, 10)
     .then(hash => {
@@ -17,25 +16,19 @@ exports.signup = (req, res, next) => {
     .catch(error => res.status(500).json({ error }));
 };
 
-// --- FONCTION DE CONNEXION (Avec nos mouchards !) ---
 exports.login = (req, res, next) => {
-  console.log("🚪 Tentative de connexion avec l'e-mail :", req.body.email);
-
   User.findOne({ email: req.body.email })
     .then(user => {
       if (!user) {
-        console.log("❌ Erreur : Utilisateur non trouvé dans la base de données !");
         return res.status(401).json({ message: 'Paire login/mot de passe incorrecte' });
       }
       
       bcrypt.compare(req.body.password, user.password)
         .then(valid => {
           if (!valid) {
-            console.log("❌ Erreur : Mot de passe incorrect !");
             return res.status(401).json({ message: 'Paire login/mot de passe incorrecte' });
           }
           
-          console.log("✅ Succès : L'utilisateur est connecté !");
           res.status(200).json({
             userId: user._id,
             token: jwt.sign(
@@ -45,13 +38,7 @@ exports.login = (req, res, next) => {
             )
           });
         })
-        .catch(error => {
-          console.log("⚠️ Erreur technique avec bcrypt :", error);
-          res.status(500).json({ error });
-        });
+        .catch(error => res.status(500).json({ error }));
     })
-    .catch(error => {
-      console.log("⚠️ Erreur technique avec MongoDB :", error);
-      res.status(500).json({ error });
-    });
+    .catch(error => res.status(500).json({ error }));
 };
