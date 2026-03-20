@@ -1,12 +1,13 @@
 const express = require('express');
 const mongoose = require('mongoose'); 
 const path = require('path');
+require('dotenv').config();
 const userRoutes = require('./routes/user');
 const bookRoutes = require('./routes/book');
 
 const app = express();
 
-mongoose.connect('mongodb+srv://chris_972:charlieprout91@p7.byyxzpp.mongodb.net/?appName=P7')
+mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('Connexion à MongoDB réussie !'))
   .catch((error) => console.log('Connexion à MongoDB échouée ! Erreur :', error));
 
