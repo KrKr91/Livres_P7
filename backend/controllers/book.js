@@ -3,25 +3,38 @@ const fs = require('fs');
 
 // nouveau livre
 exports.createBook = (req, res, next) => {
-  const bookObject = JSON.parse(req.body.book);
-  
-  // on supprime l'ID envoyé par le front (mongodb va en créer un nv)
-  delete bookObject._id;
-  delete bookObject._userId;
+    const bookObject = JSON.parse(req.body.book);
+    
+    // on supp l'ID généré par le Front-end 
+    delete bookObject._id;
+    // sécurité, on suppr le userId envoyé par le client pour éviter les usurpations d'identité
+    delete bookObject._userId;
 
-  const book = new Book({
-      ...bookObject,
-      userId: req.auth.userId, 
-      imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`,
-      
-      // si pas de note au début
-      ratings: bookObject.ratings ? bookObject.ratings : [],
-      averageRating: bookObject.averageRating ? bookObject.averageRating : 0
-  });
+    let initialRatings = bookObject.ratings || [];
+    
+    // si l'utilisateur n'a pas noté, le front envoie une note de 0
+    // on vide le tableau pour considérer que le livre n'a pas encore été noté 
+    if (initialRatings.length > 0 && initialRatings[0].grade === 0) {
+        initialRatings = [];
+    } else if (initialRatings.length > 0) {
+        // si l'utilisateur a vraiment mis une note, on s'assure qu'elle a le bon ID
+        initialRatings[0].userId = req.auth.userId;
+    }
+    
+    const book = new Book({
+        ...bookObject,
+        userId: req.auth.userId, 
+        imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`,
+        
+        // on utilise notre tableau filtré
+        ratings: initialRatings,
+        // on met à jour la moyenne selon qu'il y a une vraie note ou non
+        averageRating: initialRatings.length > 0 ? initialRatings[0].grade : 0
+    });
 
-  book.save()
-      .then(() => { res.status(201).json({ message: 'Livre enregistré !' })})
-      .catch(error => { res.status(400).json({ error })});
+    book.save()
+        .then(() => { res.status(201).json({ message: 'Livre enregistré !' })})
+        .catch(error => { res.status(400).json({ error })});
 };
 
 // récupérer tous les livres
