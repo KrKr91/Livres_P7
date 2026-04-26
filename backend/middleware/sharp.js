@@ -1,7 +1,7 @@
 const sharp = require('sharp');
 const fs = require('fs');
 
-// on s'assure que le dossier images et s'il n'existe pas, on le crée.
+// on s'assure que le dossier images existe et s'il n'existe pas, on le crée
 if (!fs.existsSync('images')) {
     fs.mkdirSync('images');
 }
@@ -12,9 +12,9 @@ module.exports = (req, res, next) => {
         return next();
     }
 
-    // on prend le nom d'origine, on remplace les espaces par des underscores (_), et on enlève l'ancienne extension (.jpg/.png).
+    // on prend le nom d'origine, on remplace les espaces par des underscores (_), et on enlève l'ancienne extension (.jpg/.png)
     const name = req.file.originalname.split(' ').join('_').split('.')[0];
-    // on ajoute la date exacte (en millisecondes) pour éviter les doublons, et on force l'extension .webp.
+    // on ajoute la date exacte (en millisecondes) pour éviter les doublons, et on force l'extension .webp
     const filename = `${name}_${Date.now()}.webp`;
 
     // sharp pour redimenssioner et convertir le format
@@ -25,7 +25,7 @@ module.exports = (req, res, next) => {
             fit: 'cover' 
         })
         .webp({ quality: 90 }) // on convertit l'image en .webp  
-        .toFile(`images/${filename}`) // on sauvegarde le résultat final physiquement dans le dossier 'images'
+        .toFile(`images/${filename}`) // on sauvegarde le résultat final physiquement dans le dossier images
         .then(() => {
             req.file.filename = filename;
             next(); 
